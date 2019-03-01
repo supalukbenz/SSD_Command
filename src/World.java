@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Random;
 
@@ -6,13 +8,19 @@ public class World extends Observable {
     private int tick;
     private int size;
 
-    private Player player;
+    private Player player; //receiver
     private Thread thread;
     private boolean notOver;
     private long delayed = 500;
     private int enemyCount = 10;
 
     private Enemy [] enemies;
+    private List<Command> history = new ArrayList<Command>(); //record command
+    private boolean replayMode = false;
+
+    public void setReplayMode() {
+        replayMode = true;
+    }
 
     public World(int size) {
         this.size = size;
@@ -26,7 +34,7 @@ public class World extends Observable {
     }
 
     public void start() {
-        player.reset();
+        player.reset(); //reset x y to 0
         player.setPosition(size/2, size/2);
         tick = 0;
         notOver = true;
@@ -34,6 +42,13 @@ public class World extends Observable {
             @Override
             public void run() {
                 while(notOver) {
+                    if(replayMode) {
+                        for(Command c: history){
+                            if(c.getTick() == tick){
+                                c.execute();
+                            }
+                        }
+                    }
                     tick++;
                     player.move();
                     checkCollisions();
@@ -75,19 +90,27 @@ public class World extends Observable {
     }
 
     public void turnPlayerNorth() {
-        player.turnNorth();
+        CommandNorth command = new CommandNorth(tick, player);
+        command.execute();
+        history.add(command);
     }
 
     public void turnPlayerSouth() {
-        player.turnSouth();
+        CommandSouth command = new CommandSouth(tick, player);
+        command.execute();
+        history.add(command);
     }
 
     public void turnPlayerWest() {
-        player.turnWest();
+        CommandWest command = new CommandWest(tick, player);
+        command.execute();
+        history.add(command);
     }
 
     public void turnPlayerEast() {
-        player.turnEast();
+        CommandEast command = new CommandEast(tick, player);
+        command.execute();
+        history.add(command);
     }
 
     public Enemy[] getEnemies() {
